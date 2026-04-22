@@ -1,0 +1,6 @@
+---
+- name: Configure PC with ROS desktop
+  hosts: pc
+  become: yes
+  roles:
+    - install_ros

@@ -1,0 +1,6 @@
+---
+ansible_user: user
+ansible_password: user
+ansible_become_password: user
+
+ros_distro: jazzy

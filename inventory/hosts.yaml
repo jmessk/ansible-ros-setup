@@ -1,0 +1,14 @@
+---
+all:
+  children:
+    pc:
+      hosts:
+        laptop-1:
+          ansible_host: 192.168.67.161
+          ros_domain_id: 1
+
+    rpi:
+      hosts:
+        rpi-1:
+          ansible_host: 192.168.1.20
+          ros_domain_id: 1

@@ -1,0 +1,6 @@
+---
+- name: Configure Raspberry Pi with ROS base
+  hosts: rpi
+  become: yes
+  roles:
+    - install_ros
