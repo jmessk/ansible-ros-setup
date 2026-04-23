@@ -2,5 +2,5 @@
 ros_package: "ros-{{ ros_distro }}-desktop"
 ros_install_dev_tools: true
 ros_extra_apt_packages:
-  - "ros-{{ ros_distro }}-demo-nodes-cpp" # https://index.ros.org/p/demo_nodes_cpp
-  - "ros-{{ ros_distro }}-rqt-image-view" # https://index.ros.org/p/rqt_image_view
+  - "ros-{{ ros_distro }}-demo-nodes-cpp" # https://index.ros.org/p/demo_nodes_cpp/
+  - "ros-{{ ros_distro }}-rqt-image-view" # https://index.ros.org/p/rqt_image_view/
