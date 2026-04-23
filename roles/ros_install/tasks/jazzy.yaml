@@ -37,7 +37,7 @@
 # Enable required repositories
 
 # export ROS_APT_SOURCE_VERSION=$(curl -s https://api.github.com/repos/ros-infrastructure/ros-apt-source/releases/latest | grep -F "tag_name" | awk -F'"' '{print $4}')
-- name: Get latest ros2 apt source release
+- name: Get latest ROS 2 apt source release
   ansible.builtin.uri:
     url: https://api.github.com/repos/ros-infrastructure/ros-apt-source/releases/latest
     return_content: yes
@@ -48,13 +48,13 @@
     ros_apt_source_version: "{{ ros_release.json.tag_name }}"
 
 # curl -L -o /tmp/ros2-apt-source.deb "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${ROS_APT_SOURCE_VERSION}/ros2-apt-source_${ROS_APT_SOURCE_VERSION}.$(. /etc/os-release && echo ${UBUNTU_CODENAME:-${VERSION_CODENAME}})_all.deb"
-- name: Download ros2 apt source package
+- name: Download ROS 2 apt source package
   ansible.builtin.get_url:
     url: https://github.com/ros-infrastructure/ros-apt-source/releases/download/{{ ros_apt_source_version }}/ros2-apt-source_{{ ros_apt_source_version }}.{{ ansible_distribution_release }}_all.deb
     dest: /tmp/ros2-apt-source.deb
 
 # sudo dpkg -i /tmp/ros2-apt-source.deb
-- name: Install ros2 apt source package
+- name: Install ROS 2 apt source package
   ansible.builtin.apt:
     deb: /tmp/ros2-apt-source.deb
     state: present
@@ -80,13 +80,6 @@
     state: present
     update_cache: yes
 
-- name: Install additional ROS 2 apt packages
-  ansible.builtin.apt:
-    name: "{{ ros_extra_apt_packages }}"
-    state: present
-    update_cache: yes
-  when: ros_extra_apt_packages | length > 0
-
 # Setup environment
 
 - name: Configure ROS 2 environment for shells
@@ -95,3 +88,4 @@
     block: |
       . /opt/ros/{{ ros_distro }}/setup.sh
       export ROS_DOMAIN_ID={{ ros_domain_id }}
+    prepend_newline: yes

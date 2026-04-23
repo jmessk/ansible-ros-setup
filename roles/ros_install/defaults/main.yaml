@@ -1,5 +1,3 @@
 ---
-ros_distro: jazzy
 ros_package: "ros-{{ ros_distro }}-ros-base"
-ros_extra_apt_packages: []
 ros_install_dev_tools: false
