@@ -1,2 +1,2 @@
 - name: Include distro-specific tasks
-  import_tasks: "{{ ros_distro }}.yaml"
+  include_tasks: "{{ ros_distro }}.yaml"

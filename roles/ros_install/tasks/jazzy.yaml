@@ -82,10 +82,12 @@
 
 # Setup environment
 
+# echo "source /opt/ros/{{ ros_distro }}/setup.sh" >> ~/.bashrc
 - name: Configure ROS 2 environment for shells
   ansible.builtin.blockinfile:
-    path: "~{{ ansible_user }}/.bashrc"
+    path: "~/.bashrc"
     block: |
       . /opt/ros/{{ ros_distro }}/setup.sh
       export ROS_DOMAIN_ID={{ ros_domain_id }}
     prepend_newline: yes
+  become_user: "{{ target_user }}"
