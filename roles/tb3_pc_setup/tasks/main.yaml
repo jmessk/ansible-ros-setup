@@ -1,0 +1,119 @@
+# PC Setup guide:
+# https://emanual.robotis.com/docs/en/platform/turtlebot3/quick-start/#pc-setup
+
+---
+
+# sudo apt-get update
+# sudo apt-get install curl lsb-release gnupg
+- name: Install Gazebo repository prerequisites
+  ansible.builtin.apt:
+    name: "{{ tb3_pc_gazebo_prerequisite_packages }}"
+    state: present
+    update_cache: true
+
+- name: Get dpkg architecture for Gazebo repository
+  ansible.builtin.command: dpkg --print-architecture
+  register: tb3_pc_dpkg_architecture
+  changed_when: false
+
+# sudo curl https://packages.osrfoundation.org/gazebo.gpg --output /usr/share/keyrings/pkgs-osrf-archive-keyring.gpg
+- name: Install Gazebo repository keyring
+  ansible.builtin.get_url:
+    url: https://packages.osrfoundation.org/gazebo.gpg
+    dest: /usr/share/keyrings/pkgs-osrf-archive-keyring.gpg
+    mode: "0644"
+
+# echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/pkgs-osrf-archive-keyring.gpg] http://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/gazebo-stable.list
+- name: Add Gazebo apt repository
+  ansible.builtin.apt_repository:
+    repo: >-
+      deb [arch={{ tb3_pc_dpkg_architecture.stdout }}
+      signed-by=/usr/share/keyrings/pkgs-osrf-archive-keyring.gpg]
+      http://packages.osrfoundation.org/gazebo/ubuntu-stable
+      {{ ansible_distribution_release }} main
+    filename: gazebo-stable
+    state: present
+    update_cache: true
+
+# sudo apt-get update
+# sudo apt-get install gz-harmonic
+- name: Install Gazebo Sim
+  ansible.builtin.apt:
+    name: "{{ tb3_pc_gazebo_package }}"
+    state: present
+    update_cache: true
+
+# sudo apt install ros-jazzy-cartographer
+# sudo apt install ros-jazzy-cartographer-ros
+# sudo apt install ros-jazzy-navigation2
+# sudo apt install ros-jazzy-nav2-bringup
+- name: Install Cartographer packages
+  ansible.builtin.apt:
+    name: "{{ tb3_pc_apt_packages }}"
+    state: present
+    update_cache: true
+
+# sudo apt install python3-colcon-common-extensions
+- name: Install TurtleBot3 workspace build packages
+  ansible.builtin.apt:
+    name: "{{ tb3_pc_build_packages }}"
+    state: present
+    update_cache: true
+
+# mkdir -p ~/turtlebot3_ws/src
+- name: Create TurtleBot3 PC workspace directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ target_user }}"
+    group: "{{ target_user }}"
+    mode: "0755"
+  loop:
+    - "{{ tb3_pc_workspace }}"
+    - "{{ tb3_pc_workspace }}/src"
+
+# cd ~/turtlebot3_ws/src/
+# git clone -b jazzy https://github.com/ROBOTIS-GIT/DynamixelSDK.git
+# git clone -b jazzy https://github.com/ROBOTIS-GIT/turtlebot3_msgs.git
+# git clone -b jazzy https://github.com/ROBOTIS-GIT/turtlebot3.git
+- name: Clone TurtleBot3 PC source repositories
+  ansible.builtin.git:
+    repo: "{{ item.repo }}"
+    dest: "{{ item.dest }}"
+    version: "{{ item.version }}"
+    update: true
+  loop: "{{ tb3_pc_source_repositories }}"
+  become_user: "{{ target_user }}"
+  environment:
+    HOME: "/home/{{ target_user }}"
+  register: tb3_pc_git_repos
+
+- name: Check whether the TurtleBot3 PC workspace is already built
+  ansible.builtin.stat:
+    path: "{{ tb3_pc_workspace }}/install/setup.bash"
+  register: tb3_pc_workspace_install
+
+# source /opt/ros/jazzy/setup.bash
+# cd ~/turtlebot3_ws
+# colcon build --symlink-install
+- name: Build TurtleBot3 PC workspace
+  ansible.builtin.shell: |
+    source /opt/ros/{{ ros_distro }}/setup.bash
+    colcon build --symlink-install
+  args:
+    chdir: "{{ tb3_pc_workspace }}"
+    executable: /bin/bash
+  become_user: "{{ target_user }}"
+  environment:
+    HOME: "/home/{{ target_user }}"
+  when: >-
+    (not tb3_pc_workspace_install.stat.exists)
+    or (tb3_pc_git_repos.results | selectattr('changed') | list | length > 0)
+
+# echo 'source ~/turtlebot3_ws/install/setup.bash' >> ~/.bashrc
+- name: Configure TurtleBot3 PC workspace environment for shells
+  ansible.builtin.blockinfile:
+    path: "/home/{{ target_user }}/.bashrc"
+    block: |
+      source {{ tb3_pc_workspace }}/install/setup.bash
+    prepend_newline: true

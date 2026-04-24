@@ -3,4 +3,6 @@
   hosts: rpi
   become: yes
   roles:
-    - install_ros
+    - ros_install
+    - ros_extra_packages_install
+    - tb3_sbc_setup

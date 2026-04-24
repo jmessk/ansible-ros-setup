@@ -1,0 +1,35 @@
+---
+tb3_sbc_workspace: "/home/{{ target_user }}/turtlebot3_ws"
+
+tb3_sbc_apt_packages:
+  - git
+  - python3-argcomplete
+  - python3-colcon-common-extensions
+  - libboost-system-dev
+  - build-essential
+  - libudev-dev
+  - "ros-{{ ros_distro }}-hls-lfcd-lds-driver"
+  - "ros-{{ ros_distro }}-turtlebot3-msgs"
+  - "ros-{{ ros_distro }}-dynamixel-sdk"
+  - "ros-{{ ros_distro }}-xacro"
+
+tb3_sbc_source_repositories:
+  - repo: https://github.com/ROBOTIS-GIT/turtlebot3.git
+    version: "{{ ros_distro }}"
+    dest: "{{ tb3_sbc_workspace }}/src/turtlebot3"
+  - repo: https://github.com/ROBOTIS-GIT/ld08_driver.git
+    version: "{{ ros_distro }}"
+    dest: "{{ tb3_sbc_workspace }}/src/ld08_driver"
+  - repo: https://github.com/ROBOTIS-GIT/coin_d4_driver.git
+    version: "{{ ros_distro }}"
+    dest: "{{ tb3_sbc_workspace }}/src/coin_d4_driver"
+
+tb3_sbc_pruned_packages:
+  - turtlebot3_cartographer
+  - turtlebot3_navigation2
+
+tb3_sbc_opencr_port: /dev/ttyACM0
+tb3_sbc_opencr_workdir: "/home/{{ target_user }}"
+tb3_sbc_opencr_archive_url: https://github.com/ROBOTIS-GIT/OpenCR-Binaries/raw/master/turtlebot3/ROS2/latest/opencr_update.tar.bz2
+tb3_sbc_opencr_archive_path: "{{ tb3_sbc_opencr_workdir }}/opencr_update.tar.bz2"
+tb3_sbc_opencr_extract_dir: "{{ tb3_sbc_opencr_workdir }}/opencr_update"

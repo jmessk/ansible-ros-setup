@@ -1,0 +1,79 @@
+# OpenCR guide:
+# https://emanual.robotis.com/docs/en/platform/turtlebot3/opencr_setup/#opencr-firmware-upload
+
+---
+
+# export OPENCR_PORT=/dev/ttyACM0
+# export OPENCR_MODEL=burger
+- name: Validate OpenCR firmware upload settings
+  ansible.builtin.assert:
+    that:
+      - tb3_sbc_opencr_model in ['burger', 'waffle']
+      - tb3_sbc_opencr_port | length > 0
+    fail_msg: Set tb3_sbc_opencr_model to burger or waffle and provide a valid tb3_sbc_opencr_port.
+    quiet: true
+
+- name: Check foreign dpkg architectures
+  ansible.builtin.command: dpkg --print-foreign-architectures
+  register: tb3_sbc_foreign_architectures
+  changed_when: false
+
+# sudo dpkg --add-architecture armhf
+- name: Enable armhf architecture
+  ansible.builtin.command: dpkg --add-architecture armhf
+  when: "'armhf' not in tb3_sbc_foreign_architectures.stdout_lines"
+  register: tb3_sbc_add_armhf_architecture
+  changed_when: tb3_sbc_add_armhf_architecture.rc == 0
+
+# sudo apt-get update
+- name: Update apt cache after enabling armhf architecture
+  ansible.builtin.apt:
+    update_cache: true
+  when: tb3_sbc_add_armhf_architecture.changed
+
+# sudo apt-get install libc6:armhf
+- name: Install OpenCR firmware upload dependencies
+  ansible.builtin.apt:
+    name:
+      - libc6:armhf
+    state: present
+    update_cache: true
+
+- name: Remove previous OpenCR firmware artifacts
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    # rm -rf ./opencr_update.tar.bz2
+    - "{{ tb3_sbc_opencr_archive_path }}"
+    - "{{ tb3_sbc_opencr_extract_dir }}"
+  become_user: "{{ target_user }}"
+
+# wget https://github.com/ROBOTIS-GIT/OpenCR-Binaries/raw/master/turtlebot3/ROS2/latest/opencr_update.tar.bz2
+- name: Download OpenCR firmware archive
+  ansible.builtin.get_url:
+    url: "{{ tb3_sbc_opencr_archive_url }}"
+    dest: "{{ tb3_sbc_opencr_archive_path }}"
+    mode: "0644"
+  become_user: "{{ target_user }}"
+
+# tar -xvf opencr_update.tar.bz2
+- name: Extract OpenCR firmware archive
+  ansible.builtin.unarchive:
+    src: "{{ tb3_sbc_opencr_archive_path }}"
+    dest: "{{ tb3_sbc_opencr_workdir }}"
+    remote_src: true
+  become_user: "{{ target_user }}"
+
+# cd ./opencr_update
+# ./update.sh $OPENCR_PORT $OPENCR_MODEL.opencr
+- name: Upload OpenCR firmware
+  ansible.builtin.command:
+    argv:
+      - ./update.sh
+      - "{{ tb3_sbc_opencr_port }}"
+      - "{{ tb3_sbc_opencr_model }}.opencr"
+    chdir: "{{ tb3_sbc_opencr_extract_dir }}"
+  become_user: "{{ target_user }}"
+  environment:
+    HOME: "/home/{{ target_user }}"

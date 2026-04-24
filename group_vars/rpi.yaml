@@ -1,8 +1,11 @@
 ---
 ros_package: "ros-{{ ros_distro }}-ros-base"
 ros_install_dev_tools: true
+
 ros_extra_apt_packages:
   - "ros-{{ ros_distro }}-demo-nodes-cpp" # https://index.ros.org/p/demo_nodes_cpp/
   - "ros-{{ ros_distro }}-v4l2-camera" # https://index.ros.org/r/v4l2_camera/
   - "ros-{{ ros_distro }}-image-transport" # https://index.ros.org/p/image_transport/
   - "ros-{{ ros_distro }}-image-transport-plugins" # https://index.ros.org/p/image_transport_plugins/
+
+tb3_sbc_opencr_model: burger

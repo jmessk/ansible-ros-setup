@@ -1,0 +1,137 @@
+# SBC Setup guide:
+# https://emanual.robotis.com/docs/en/platform/turtlebot3/sbc_setup/#sbc-setup
+
+---
+
+# sudo nano /etc/apt/apt.conf.d/20auto-upgrades
+- name: Disable automatic apt updates
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    content: |
+      APT::Periodic::Update-Package-Lists "0";
+      APT::Periodic::Unattended-Upgrade "0";
+    owner: root
+    group: root
+    mode: "0644"
+
+# systemctl mask systemd-networkd-wait-online.service
+- name: Mask network wait service
+  ansible.builtin.systemd_service:
+    name: systemd-networkd-wait-online.service
+    masked: true
+
+# sudo systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target
+- name: Mask sleep and hibernation targets
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    masked: true
+  loop:
+    - sleep.target
+    - suspend.target
+    - hibernate.target
+    - hybrid-sleep.target
+
+# Install and Build ROS Packages.
+
+# sudo apt install python3-argcomplete python3-colcon-common-extensions libboost-system-dev build-essential
+# sudo apt install ros-jazzy-hls-lfcd-lds-driver
+# sudo apt install ros-jazzy-turtlebot3-msgs
+# sudo apt install ros-jazzy-dynamixel-sdk
+# sudo apt install ros-jazzy-xacro
+# sudo apt install libudev-dev
+- name: Install TurtleBot3 apt packages
+  ansible.builtin.apt:
+    name: "{{ tb3_sbc_apt_packages }}"
+    state: present
+    update_cache: true
+
+# mkdir -p ~/turtlebot3_ws/src && cd ~/turtlebot3_ws/src
+- name: Create TurtleBot3 workspace directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ target_user }}"
+    group: "{{ target_user }}"
+    mode: "0755"
+  loop:
+    - "{{ tb3_sbc_workspace }}"
+    - "{{ tb3_sbc_workspace }}/src"
+
+# git clone -b jazzy https://github.com/ROBOTIS-GIT/turtlebot3.git
+# git clone -b jazzy https://github.com/ROBOTIS-GIT/ld08_driver.git
+# git clone -b jazzy https://github.com/ROBOTIS-GIT/coin_d4_driver
+- name: Clone TurtleBot3 source repositories
+  ansible.builtin.git:
+    repo: "{{ item.repo }}"
+    dest: "{{ item.dest }}"
+    version: "{{ item.version }}"
+    update: true
+  loop: "{{ tb3_sbc_source_repositories }}"
+  become_user: "{{ target_user }}"
+  register: tb3_sbc_git_repos
+
+# cd ~/turtlebot3_ws/src/turtlebot3
+# rm -r turtlebot3_cartographer turtlebot3_navigation2
+- name: Remove unsupported TurtleBot3 packages from workspace
+  ansible.builtin.file:
+    path: "{{ tb3_sbc_workspace }}/src/turtlebot3/{{ item }}"
+    state: absent
+  loop: "{{ tb3_sbc_pruned_packages }}"
+  register: tb3_sbc_pruned_results
+
+- name: Check whether the TurtleBot3 workspace is already built
+  ansible.builtin.stat:
+    path: "{{ tb3_sbc_workspace }}/install/setup.bash"
+  register: tb3_sbc_workspace_install
+
+# colcon build --symlink-install --parallel-workers 1
+- name: Build TurtleBot3 workspace
+  ansible.builtin.shell: |
+    source /opt/ros/{{ ros_distro }}/setup.bash
+    colcon build --symlink-install --parallel-workers 1
+  args:
+    chdir: "{{ tb3_sbc_workspace }}"
+    executable: /bin/bash
+  become_user: "{{ target_user }}"
+  environment:
+    HOME: "/home/{{ target_user }}"
+  when: >-
+    (not tb3_sbc_workspace_install.stat.exists)
+    or (tb3_sbc_git_repos.results | selectattr('changed') | list | length > 0)
+    or (tb3_sbc_pruned_results.results | selectattr('changed') | list | length > 0)
+
+# echo 'source ~/turtlebot3_ws/install/setup.bash' >> ~/.bashrc
+# echo 'export LDS_MODEL=LDS-02' >> ~/.bashrc
+- name: Configure TurtleBot3 workspace environment for shells
+  ansible.builtin.blockinfile:
+    path: "~/.bashrc"
+    block: |
+      source {{ tb3_sbc_workspace }}/install/setup.bash
+      export LDS_MODEL=LDS-02
+    prepend_newline: yes
+  become_user: "{{ target_user }}"
+
+# USB Port Settings for OpenCR
+
+# sudo cp `ros2 pkg prefix turtlebot3_bringup`/share/turtlebot3_bringup/script/99-turtlebot3-cdc.rules /etc/udev/rules.d/
+- name: Install TurtleBot3 OpenCR udev rules
+  ansible.builtin.copy:
+    src: "{{ tb3_sbc_workspace }}/install/turtlebot3_bringup/share/turtlebot3_bringup/script/99-turtlebot3-cdc.rules"
+    dest: /etc/udev/rules.d/99-turtlebot3-cdc.rules
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0644"
+  register: tb3_sbc_udev_rules
+
+# sudo udevadm control --reload-rules
+- name: Reload udev rules
+  ansible.builtin.command: udevadm control --reload-rules
+  when: tb3_sbc_udev_rules.changed
+  changed_when: true
+
+# sudo udevadm trigger
+- name: Trigger udev after updating rules
+  ansible.builtin.command: udevadm trigger
+  when: tb3_sbc_udev_rules.changed
+  changed_when: true

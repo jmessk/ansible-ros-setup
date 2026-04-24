@@ -1,0 +1,6 @@
+---
+- name: Import TurtleBot3 SBC setup tasks
+  ansible.builtin.import_tasks: setup.yaml
+
+- name: Import OpenCR firmware upload tasks
+  ansible.builtin.import_tasks: opencr_firmware.yaml

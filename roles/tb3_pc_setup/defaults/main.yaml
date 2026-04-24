@@ -1,0 +1,28 @@
+---
+tb3_pc_workspace: "/home/{{ target_user }}/turtlebot3_ws"
+
+tb3_pc_gazebo_prerequisite_packages:
+  - lsb-release
+  - gnupg
+
+tb3_pc_gazebo_package: gz-harmonic
+
+tb3_pc_apt_packages:
+  - "ros-{{ ros_distro }}-cartographer"
+  - "ros-{{ ros_distro }}-cartographer-ros"
+  - "ros-{{ ros_distro }}-navigation2"
+  - "ros-{{ ros_distro }}-nav2-bringup"
+
+tb3_pc_build_packages:
+  - python3-colcon-common-extensions
+
+tb3_pc_source_repositories:
+  - repo: https://github.com/ROBOTIS-GIT/DynamixelSDK.git
+    version: "{{ ros_distro }}"
+    dest: "{{ tb3_pc_workspace }}/src/DynamixelSDK"
+  - repo: https://github.com/ROBOTIS-GIT/turtlebot3_msgs.git
+    version: "{{ ros_distro }}"
+    dest: "{{ tb3_pc_workspace }}/src/turtlebot3_msgs"
+  - repo: https://github.com/ROBOTIS-GIT/turtlebot3.git
+    version: "{{ ros_distro }}"
+    dest: "{{ tb3_pc_workspace }}/src/turtlebot3"
