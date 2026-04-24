@@ -8,28 +8,28 @@
 - name: Validate OpenCR firmware upload settings
   ansible.builtin.assert:
     that:
-      - tb3_sbc_opencr_model in ['burger', 'waffle']
-      - tb3_sbc_opencr_port | length > 0
-    fail_msg: Set tb3_sbc_opencr_model to burger or waffle and provide a valid tb3_sbc_opencr_port.
+      - tb3_opencr_model in ['burger', 'waffle']
+      - tb3_opencr_port | length > 0
+    fail_msg: Set tb3_opencr_model to burger or waffle and provide a valid tb3_opencr_port.
     quiet: true
 
 - name: Check foreign dpkg architectures
   ansible.builtin.command: dpkg --print-foreign-architectures
-  register: tb3_sbc_foreign_architectures
+  register: tb3_opencr_foreign_architectures
   changed_when: false
 
 # sudo dpkg --add-architecture armhf
 - name: Enable armhf architecture
   ansible.builtin.command: dpkg --add-architecture armhf
-  when: "'armhf' not in tb3_sbc_foreign_architectures.stdout_lines"
-  register: tb3_sbc_add_armhf_architecture
-  changed_when: tb3_sbc_add_armhf_architecture.rc == 0
+  when: "'armhf' not in tb3_opencr_foreign_architectures.stdout_lines"
+  register: tb3_opencr_add_armhf_architecture
+  changed_when: tb3_opencr_add_armhf_architecture.rc == 0
 
 # sudo apt-get update
 - name: Update apt cache after enabling armhf architecture
   ansible.builtin.apt:
     update_cache: true
-  when: tb3_sbc_add_armhf_architecture.changed
+  when: tb3_opencr_add_armhf_architecture.changed
 
 # sudo apt-get install libc6:armhf
 - name: Install OpenCR firmware upload dependencies
@@ -45,23 +45,23 @@
     state: absent
   loop:
     # rm -rf ./opencr_update.tar.bz2
-    - "{{ tb3_sbc_opencr_archive_path }}"
-    - "{{ tb3_sbc_opencr_extract_dir }}"
+    - "{{ tb3_opencr_archive_path }}"
+    - "{{ tb3_opencr_extract_dir }}"
   become_user: "{{ target_user }}"
 
 # wget https://github.com/ROBOTIS-GIT/OpenCR-Binaries/raw/master/turtlebot3/ROS2/latest/opencr_update.tar.bz2
 - name: Download OpenCR firmware archive
   ansible.builtin.get_url:
-    url: "{{ tb3_sbc_opencr_archive_url }}"
-    dest: "{{ tb3_sbc_opencr_archive_path }}"
+    url: "{{ tb3_opencr_archive_url }}"
+    dest: "{{ tb3_opencr_archive_path }}"
     mode: "0644"
   become_user: "{{ target_user }}"
 
 # tar -xvf opencr_update.tar.bz2
 - name: Extract OpenCR firmware archive
   ansible.builtin.unarchive:
-    src: "{{ tb3_sbc_opencr_archive_path }}"
-    dest: "{{ tb3_sbc_opencr_workdir }}"
+    src: "{{ tb3_opencr_archive_path }}"
+    dest: "{{ tb3_opencr_workdir }}"
     remote_src: true
   become_user: "{{ target_user }}"
 
@@ -71,9 +71,34 @@
   ansible.builtin.command:
     argv:
       - ./update.sh
-      - "{{ tb3_sbc_opencr_port }}"
-      - "{{ tb3_sbc_opencr_model }}.opencr"
-    chdir: "{{ tb3_sbc_opencr_extract_dir }}"
+      - "{{ tb3_opencr_port }}"
+      - "{{ tb3_opencr_model }}.opencr"
+    chdir: "{{ tb3_opencr_extract_dir }}"
   become_user: "{{ target_user }}"
   environment:
     HOME: "/home/{{ target_user }}"
+
+# USB Port Settings for OpenCR
+
+# sudo cp `ros2 pkg prefix turtlebot3_bringup`/share/turtlebot3_bringup/script/99-turtlebot3-cdc.rules /etc/udev/rules.d/
+- name: Install TurtleBot3 OpenCR udev rules
+  ansible.builtin.copy:
+    src: "{{ tb3_opencr_workspace }}/install/turtlebot3_bringup/share/turtlebot3_bringup/script/99-turtlebot3-cdc.rules"
+    dest: /etc/udev/rules.d/99-turtlebot3-cdc.rules
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0644"
+  register: tb3_opencr_udev_rules
+
+# sudo udevadm control --reload-rules
+- name: Reload udev rules
+  ansible.builtin.command: udevadm control --reload-rules
+  when: tb3_opencr_udev_rules.changed
+  changed_when: true
+
+# sudo udevadm trigger
+- name: Trigger udev after updating rules
+  ansible.builtin.command: udevadm trigger
+  when: tb3_opencr_udev_rules.changed
+  changed_when: true

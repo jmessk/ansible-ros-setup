@@ -27,9 +27,3 @@ tb3_sbc_source_repositories:
 tb3_sbc_pruned_packages:
   - turtlebot3_cartographer
   - turtlebot3_navigation2
-
-tb3_sbc_opencr_port: /dev/ttyACM0
-tb3_sbc_opencr_workdir: "/home/{{ target_user }}"
-tb3_sbc_opencr_archive_url: https://github.com/ROBOTIS-GIT/OpenCR-Binaries/raw/master/turtlebot3/ROS2/latest/opencr_update.tar.bz2
-tb3_sbc_opencr_archive_path: "{{ tb3_sbc_opencr_workdir }}/opencr_update.tar.bz2"
-tb3_sbc_opencr_extract_dir: "{{ tb3_sbc_opencr_workdir }}/opencr_update"

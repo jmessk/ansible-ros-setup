@@ -1,0 +1,8 @@
+---
+tb3_opencr_model: burger
+tb3_opencr_port: /dev/ttyACM0
+tb3_opencr_workspace: "/home/{{ target_user }}/turtlebot3_ws"
+tb3_opencr_workdir: "/home/{{ target_user }}"
+tb3_opencr_archive_url: https://github.com/ROBOTIS-GIT/OpenCR-Binaries/raw/master/turtlebot3/ROS2/latest/opencr_update.tar.bz2
+tb3_opencr_archive_path: "{{ tb3_opencr_workdir }}/opencr_update.tar.bz2"
+tb3_opencr_extract_dir: "{{ tb3_opencr_workdir }}/opencr_update"
