@@ -1,0 +1,40 @@
+# Host pre-setup for Ubuntu-based targets.
+
+---
+
+# Some Ubuntu Noble images only ship with "Suites: noble", but Jazzy depends on
+# package versions published in noble-updates.
+# Issue: https://github.com/ros2/ros2/issues/1621#issuecomment-3716728427
+- name: Ensure noble-updates suite is enabled for Ubuntu packages
+  ansible.builtin.lineinfile:
+    path: /etc/apt/sources.list.d/ubuntu.sources
+    regexp: '^(\s*Suites:\s*)noble\s*$'
+    line: '\1noble noble-updates'
+    backrefs: true
+  when:
+    - ansible_facts["distribution"] == "Ubuntu"
+    - ansible_facts["distribution_release"] == "noble"
+
+# sudo apt update && sudo apt upgrade
+- name: Upgrade Ubuntu packages before installing other software
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: true
+
+- name: Disable systemd-timesyncd
+  ansible.builtin.systemd_service:
+    name: systemd-timesyncd
+    enabled: false
+    state: stopped
+
+- name: Install chrony
+  ansible.builtin.apt:
+    name: chrony
+    state: present
+    update_cache: true
+
+- name: Enable chrony service
+  ansible.builtin.systemd_service:
+    name: chrony
+    enabled: true
+    state: started
