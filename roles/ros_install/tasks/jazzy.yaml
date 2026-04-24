@@ -8,8 +8,8 @@
 - name: Validate Ubuntu release for ROS 2 Jazzy
   ansible.builtin.assert:
     that:
-      - ansible_distribution == 'Ubuntu'
-      - ansible_distribution_release == 'noble'
+      - ansible_facts["distribution"] == "Ubuntu"
+      - ansible_facts["distribution_release"] == "noble"
     fail_msg: ROS 2 Jazzy deb packages are supported only on Ubuntu Noble (24.04).
     quiet: true
 
@@ -34,8 +34,6 @@
   ansible.builtin.command: update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
   changed_when: false
 
-# Enable required repositories
-
 # export ROS_APT_SOURCE_VERSION=$(curl -s https://api.github.com/repos/ros-infrastructure/ros-apt-source/releases/latest | grep -F "tag_name" | awk -F'"' '{print $4}')
 - name: Get latest ROS 2 apt source release
   ansible.builtin.uri:
@@ -50,7 +48,7 @@
 # curl -L -o /tmp/ros2-apt-source.deb "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${ROS_APT_SOURCE_VERSION}/ros2-apt-source_${ROS_APT_SOURCE_VERSION}.$(. /etc/os-release && echo ${UBUNTU_CODENAME:-${VERSION_CODENAME}})_all.deb"
 - name: Download ROS 2 apt source package
   ansible.builtin.get_url:
-    url: https://github.com/ros-infrastructure/ros-apt-source/releases/download/{{ ros_apt_source_version }}/ros2-apt-source_{{ ros_apt_source_version }}.{{ ansible_distribution_release }}_all.deb
+    url: https://github.com/ros-infrastructure/ros-apt-source/releases/download/{{ ros_apt_source_version }}/ros2-apt-source_{{ ros_apt_source_version }}.{{ ansible_facts["distribution_release"] }}_all.deb
     dest: /tmp/ros2-apt-source.deb
 
 # sudo dpkg -i /tmp/ros2-apt-source.deb

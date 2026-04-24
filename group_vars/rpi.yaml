@@ -8,4 +8,5 @@ ros_extra_apt_packages:
   - "ros-{{ ros_distro }}-image-transport" # https://index.ros.org/p/image_transport/
   - "ros-{{ ros_distro }}-image-transport-plugins" # https://index.ros.org/p/image_transport_plugins/
 
-tb3_sbc_opencr_model: burger
+tb3_opencr_model: burger
+tb3_opencr_port: /dev/ttyACM0

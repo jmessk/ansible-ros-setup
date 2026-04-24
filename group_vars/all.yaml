@@ -2,6 +2,7 @@
 ansible_user: user
 ansible_password: user
 ansible_become_password: user
+ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
 
 target_user: user
 ros_distro: jazzy
