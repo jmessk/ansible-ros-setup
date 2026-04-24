@@ -3,6 +3,8 @@
   hosts: rpi
   become: yes
   roles:
+    - pre_setup
     - ros_install
     - ros_extra_packages_install
     - tb3_sbc_setup
+    - tb3_opencr_setup

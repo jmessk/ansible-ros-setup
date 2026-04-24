@@ -3,6 +3,7 @@
   hosts: pc
   become: yes
   roles:
+    - pre_setup
     - ros_install
     - ros_extra_packages_install
     - tb3_pc_setup
