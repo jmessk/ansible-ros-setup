@@ -86,7 +86,10 @@
     path: "~/.bashrc"
     marker: "# {mark} ROS2 ENV"
     block: |
+      echo IP Address = $(hostname -I)
       . /opt/ros/{{ ros_distro }}/setup.sh
       export ROS_DOMAIN_ID={{ ros_domain_id }}
+      export ROS_AUTOMATIC_DISCOVERY_RANGE=SUBNET
+      env | grep ROS
     prepend_newline: yes
   become_user: "{{ target_user }}"
