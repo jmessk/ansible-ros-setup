@@ -84,6 +84,7 @@
 - name: Configure ROS 2 environment for shells
   ansible.builtin.blockinfile:
     path: "~/.bashrc"
+    marker: "# {mark} ROS2 ENV"
     block: |
       . /opt/ros/{{ ros_distro }}/setup.sh
       export ROS_DOMAIN_ID={{ ros_domain_id }}

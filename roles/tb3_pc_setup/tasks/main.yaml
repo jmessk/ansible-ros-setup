@@ -115,6 +115,7 @@
 - name: Configure TurtleBot3 PC workspace environment for shells
   ansible.builtin.blockinfile:
     path: "/home/{{ target_user }}/.bashrc"
+    marker: "# {mark} TURTLEBOT3 ENV"
     block: |
       source {{ tb3_pc_workspace }}/install/setup.bash
     prepend_newline: true

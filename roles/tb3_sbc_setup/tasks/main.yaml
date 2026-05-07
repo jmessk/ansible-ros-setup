@@ -106,6 +106,7 @@
 - name: Configure TurtleBot3 workspace environment for shells
   ansible.builtin.blockinfile:
     path: "~/.bashrc"
+    marker: "# {mark} TURTLEBOT3 ENV"
     block: |
       source {{ tb3_sbc_workspace }}/install/setup.bash
       export LDS_MODEL=LDS-02
