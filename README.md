@@ -5,6 +5,19 @@ This repository installs ROS on Ubuntu hosts with Ansible.
 - `setup_pc.yaml` targets the `pc` group.
 - `setup_rpi.yaml` targets the `rpi` group.
 
+## Usage
+
+```bash
+ansible-playbook -i inventory/hosts.yaml setup_pc.yaml
+ansible-playbook -i inventory/hosts.yaml setup_rpi.yaml
+```
+
+## Time synchronization
+
+This setup currently uses **chrony** instead of `systemd-timesyncd`.
+
+`chrony` generally converges faster after boot or network recovery, copes better with unstable links such as Wi-Fi, and provides more detailed control and diagnostics. That makes it a better fit for ROS hosts where clock drift can affect logs, bag playback, and coordination between machines.
+
 ## Structure
 
 - `group_vars/all.yaml` defines the shared ROS distro.
@@ -61,10 +74,3 @@ If a package needs a source build, a vendor script, or a custom repository, put 
 `tb3_sbc_setup` is the Raspberry Pi side for the TurtleBot3 workspace and SBC-specific system settings.
 
 `tb3_opencr_setup` handles the Raspberry Pi OpenCR path separately: armhf support, firmware upload, and the udev rules needed for the board.
-
-## Usage
-
-```bash
-ansible-playbook -i inventory/hosts.yaml setup_pc.yaml
-ansible-playbook -i inventory/hosts.yaml setup_rpi.yaml
-```
