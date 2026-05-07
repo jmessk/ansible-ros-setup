@@ -66,6 +66,7 @@
     dest: "{{ item.dest }}"
     version: "{{ item.version }}"
     update: true
+    force: true
   loop: "{{ tb3_sbc_source_repositories }}"
   become_user: "{{ target_user }}"
   register: tb3_sbc_git_repos

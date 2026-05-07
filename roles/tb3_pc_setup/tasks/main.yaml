@@ -82,6 +82,7 @@
     dest: "{{ item.dest }}"
     version: "{{ item.version }}"
     update: true
+    force: true
   loop: "{{ tb3_pc_source_repositories }}"
   become_user: "{{ target_user }}"
   environment:
